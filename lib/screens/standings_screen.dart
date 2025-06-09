@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../provider/standings_provider.dart';
 import '../models/football_models.dart';
-import '../services/football_api_service.dart';
-import '../screens/team_detail_screen.dart';
+import 'team_detail_screen.dart';
 
-class StandingsScreen extends StatefulWidget {
+class StandingsScreen extends StatelessWidget {
   final int competitionId;
   final String competitionName;
   final String? season;
@@ -14,26 +15,6 @@ class StandingsScreen extends StatefulWidget {
     required this.competitionName,
     this.season,
   });
-
-  @override
-  State<StandingsScreen> createState() => _StandingsScreenState();
-}
-
-class _StandingsScreenState extends State<StandingsScreen> {
-  late Future<StandingsResponse> _standingsFuture;
-  final FootballApiService _apiService = FootballApiService();
-
-  @override
-  void initState() {
-    super.initState();
-    _loadStandings();
-  }
-
-  Future<void> _loadStandings() async {
-    setState(() {
-      _standingsFuture = _apiService.getStandings(widget.competitionId, season: widget.season);
-    });
-  }
 
   Widget _buildTeamCrestImage(String? crestUrl, {double width = 24, double height = 24}) {
     if (crestUrl == null || crestUrl.isEmpty) {
@@ -48,33 +29,33 @@ class _StandingsScreenState extends State<StandingsScreen> {
     );
   }
 
-  Widget _buildCompetitionInfoInBody(StandingsResponse response) {
+  Widget _buildCompetitionInfoInBody(BuildContext context, StandingsResponse response) {
     return Padding(
       padding: const EdgeInsets.only(top: 0, bottom: 10.0),
       child: Column(
         children: [
           if (response.season?.startDate != null)
             Text(
-              'Musim: ${widget.season ?? response.season!.startDate.substring(0, 4)}',
+              'Musim: ${season ?? response.season!.startDate.substring(0, 4)}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade700),
             ),
           if (response.standings.isNotEmpty) ...[
-             if (response.standings.first.group != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 2.0),
-                  child: Text( 
-                    'Grup: ${response.standings.first.group}',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500),
-                  ),
-                )
-             else if (response.standings.first.stage != "REGULAR_SEASON" && response.standings.first.stage.isNotEmpty)
-                 Padding(
-                  padding: const EdgeInsets.only(top: 2.0),
-                  child: Text( 
-                    'Stage: ${response.standings.first.stage}', 
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500),
-                  ),
+            if (response.standings.first.group != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 2.0),
+                child: Text(
+                  'Grup: ${response.standings.first.group}',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500),
                 ),
+              )
+            else if (response.standings.first.stage != "REGULAR_SEASON" && response.standings.first.stage.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 2.0),
+                child: Text(
+                  'Stage: ${response.standings.first.stage}',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+                ),
+              ),
           ]
         ],
       ),
@@ -83,9 +64,9 @@ class _StandingsScreenState extends State<StandingsScreen> {
 
   Widget _buildStandingsListHeader(BuildContext context) {
     TextStyle headerStyle = TextStyle(
-      fontWeight: FontWeight.bold, 
+      fontWeight: FontWeight.bold,
       fontSize: 11,
-      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)
+      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
     );
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -94,7 +75,7 @@ class _StandingsScreenState extends State<StandingsScreen> {
         border: Border(
           bottom: BorderSide(color: Theme.of(context).dividerColor, width: 0.5),
           top: BorderSide(color: Theme.of(context).dividerColor, width: 0.5),
-        )
+        ),
       ),
       child: Row(
         children: [
@@ -116,7 +97,7 @@ class _StandingsScreenState extends State<StandingsScreen> {
     TextStyle dataStyle = TextStyle(fontSize: 12.5, color: Theme.of(context).textTheme.bodyMedium?.color);
     return InkWell(
       onTap: () {
-         Navigator.push(
+        Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => TeamDetailScreen(
@@ -154,9 +135,9 @@ class _StandingsScreenState extends State<StandingsScreen> {
       ),
     );
   }
-  
-  Widget _buildErrorView(String message, VoidCallback onRetry) {
-     return Center(
+
+  Widget _buildErrorView(BuildContext context, String message, VoidCallback onRetry) {
+    return Center(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -182,7 +163,7 @@ class _StandingsScreenState extends State<StandingsScreen> {
   }
 
   Widget _buildEmptyView(String message) {
-     return Center(
+    return Center(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -197,88 +178,78 @@ class _StandingsScreenState extends State<StandingsScreen> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: FutureBuilder<StandingsResponse>(
-          future: _standingsFuture, // Gunakan future yang sama untuk mendapatkan emblem di AppBar
-          builder: (context, snapshot) {
-            String titleText = widget.competitionName; // Default title
-            Widget? leadingImage;
-            if (snapshot.connectionState == ConnectionState.done && snapshot.hasData && snapshot.data?.competition?.emblem != null) {
-              leadingImage = Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: _buildTeamCrestImage(snapshot.data!.competition!.emblem, height: 28, width: 28),
-              );
-              // titleText = snapshot.data!.competition!.name; // Bisa juga update nama dari API
-            } else if (snapshot.connectionState == ConnectionState.done && snapshot.hasData && widget.competitionName.isNotEmpty) {
-              // Jika emblem tidak ada tapi nama ada dari widget
-               titleText = widget.competitionName;
-            }
-            return Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if(leadingImage != null) leadingImage,
-                Flexible(child: Text(titleText, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 18))),
-              ],
-            );
-          }
-        ),
-        elevation: 1,
-      ),
-      body: FutureBuilder<StandingsResponse>(
-        future: _standingsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return _buildErrorView('Gagal memuat klasemen: ${snapshot.error}', _loadStandings);
-          } else if (snapshot.hasData) {
-            final standingsResponse = snapshot.data!;
-
-            if (standingsResponse.standings.isEmpty) {
-              return _buildEmptyView('Tidak ada data klasemen tersedia untuk kompetisi "${widget.competitionName}".');
-            }
-
-            StandingGroup? displayGroup;
-            try {
-               displayGroup = standingsResponse.standings.firstWhere(
-                (s) => s.type == 'TOTAL',
-              );
-            } catch (e) {
-              if (standingsResponse.standings.isNotEmpty) {
-                displayGroup = standingsResponse.standings.first;
-              }
-            }
-
-            if (displayGroup == null || displayGroup.table.isEmpty) {
-               return _buildEmptyView("Tidak ada data klasemen (TOTAL) untuk ditampilkan pada kompetisi \"${widget.competitionName}\".");
-            }
-
-            return Column(
-              children: [
-                _buildCompetitionInfoInBody(standingsResponse), // Info musim, grup
-                _buildStandingsListHeader(context),
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: _loadStandings,
-                    child: ListView.separated(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      itemCount: displayGroup.table.length,
-                      itemBuilder: (context, index) {
-                        return _buildStandingsRow(context, displayGroup!.table[index], index, index % 2 == 0);
-                      },
-                      separatorBuilder: (context, index) => const Divider(height: 0.5, thickness: 0.5, indent: 16, endIndent: 16),
-                    ),
-                  ),
-                ),
-              ],
-            );
-          } else {
-            return _buildEmptyView('Tidak ada data klasemen ditemukan.');
-          }
+    return ChangeNotifierProvider(
+      create: (_) => StandingsProvider()..loadStandings(competitionId, season: season),
+      child: Consumer<StandingsProvider>(
+        builder: (context, provider, _) {
+          return Scaffold(
+            appBar: AppBar(
+              title: Builder(
+                builder: (context) {
+                  String titleText = competitionName;
+                  Widget? leadingImage;
+                  if (!provider.isLoading &&
+                      provider.standings?.competition?.emblem != null) {
+                    leadingImage = Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: _buildTeamCrestImage(provider.standings!.competition!.emblem, height: 28, width: 28),
+                    );
+                  }
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (leadingImage != null) leadingImage,
+                      Flexible(child: Text(titleText, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 18))),
+                    ],
+                  );
+                },
+              ),
+              elevation: 1,
+            ),
+            body: provider.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : provider.error != null
+                    ? _buildErrorView(context, 'Gagal memuat klasemen: ${provider.error}', () => provider.loadStandings(competitionId, season: season))
+                    : provider.standings == null || provider.standings!.standings.isEmpty
+                        ? _buildEmptyView('Tidak ada data klasemen tersedia untuk kompetisi "$competitionName".')
+                        : Builder(
+                            builder: (context) {
+                              final standingsResponse = provider.standings!;
+                              StandingGroup? displayGroup;
+                              try {
+                                displayGroup = standingsResponse.standings.firstWhere((s) => s.type == 'TOTAL');
+                              } catch (e) {
+                                if (standingsResponse.standings.isNotEmpty) {
+                                  displayGroup = standingsResponse.standings.first;
+                                }
+                              }
+                              if (displayGroup == null || displayGroup.table.isEmpty) {
+                                return _buildEmptyView("Tidak ada data klasemen (TOTAL) untuk ditampilkan pada kompetisi \"$competitionName\".");
+                              }
+                              return Column(
+                                children: [
+                                  _buildCompetitionInfoInBody(context, standingsResponse),
+                                  _buildStandingsListHeader(context),
+                                  Expanded(
+                                    child: RefreshIndicator(
+                                      onRefresh: () async => provider.loadStandings(competitionId, season: season),
+                                      child: ListView.separated(
+                                        physics: const AlwaysScrollableScrollPhysics(),
+                                        itemCount: displayGroup!.table.length,
+                                        itemBuilder: (context, index) {
+                                          return _buildStandingsRow(context, displayGroup!.table[index], index, index % 2 == 0);
+                                        },
+                                        separatorBuilder: (context, index) => const Divider(height: 0.5, thickness: 0.5, indent: 16, endIndent: 16),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+          );
         },
       ),
     );

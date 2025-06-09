@@ -1,8 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import '../models/user_model.dart'; // Sesuaikan path ini
-import '../models/football_models.dart'; // Sesuaikan path ini
-// Pastikan Competition, Area, TeamInfo, TeamDetailResponse didefinisikan di football_models.dart
+import '../models/user_model.dart';
+import '../models/football_models.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -10,8 +9,8 @@ class DatabaseHelper {
   DatabaseHelper._internal();
 
   static Database? _database;
-  static const String _dbName = 'app_local_database.db'; // Ganti nama DB jika perlu
-  static const int _dbVersion = 2; // NAIKKAN VERSI DATABASE
+  static const String _dbName = 'app_local_database.db';
+  static const int _dbVersion = 2;
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -25,7 +24,7 @@ class DatabaseHelper {
       path,
       version: _dbVersion,
       onCreate: _onCreate,
-      onUpgrade: _onUpgrade, // Aktifkan onUpgrade
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -39,7 +38,7 @@ class DatabaseHelper {
         password TEXT NOT NULL
       )
     ''');
-    // Tabel baru untuk kompetisi favorit
+    // Tabel kompetisi favorit
     await db.execute('''
       CREATE TABLE favorite_competitions(
         id INTEGER PRIMARY KEY, 
@@ -49,7 +48,7 @@ class DatabaseHelper {
         type TEXT 
       )
     ''');
-    // Tabel baru untuk tim favorit
+    // Tabel tim favorit
     await db.execute('''
       CREATE TABLE favorite_teams(
         id INTEGER PRIMARY KEY,
@@ -64,9 +63,6 @@ class DatabaseHelper {
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      // Tambahkan tabel baru jika upgrade dari versi 1 ke 2
-      // Periksa apakah tabel sudah ada untuk menghindari error jika _onCreate sudah jalan
-      // (meskipun idealnya _onCreate hanya jalan sekali)
       try {
         await db.execute('''
           CREATE TABLE favorite_competitions(
@@ -102,7 +98,6 @@ class DatabaseHelper {
   Future<int> registerUser(User user) async {
     final db = await database;
     try {
-      // Pastikan user.toMap() tidak menyertakan ID jika ID-nya null (auto-increment)
       Map<String, dynamic> userMap = user.toMap();
       if (user.id == null) {
         userMap.remove('id');
@@ -182,7 +177,7 @@ class DatabaseHelper {
       'favorite_competitions',
       where: 'id = ?',
       whereArgs: [competitionId],
-      limit: 1, // Hanya butuh tahu ada atau tidak
+      limit: 1,
     );
     return maps.isNotEmpty;
   }
@@ -194,10 +189,9 @@ class DatabaseHelper {
       return Competition(
         id: maps[i]['id'],
         name: maps[i]['name'],
-        area: Area(id: 0, name: maps[i]['areaName']), 
+        area: Area(id: 0, name: maps[i]['areaName']),
         emblem: maps[i]['emblem'],
         type: maps[i]['type'],
-        // plan dan currentSeason akan null, ini normal untuk data favorit yang disederhanakan
       );
     });
   }
@@ -214,12 +208,12 @@ class DatabaseHelper {
         'shortName': team.shortName,
         'tla': team.tla,
         'crest': team.crest,
-        'areaName': teamAreaName, 
+        'areaName': teamAreaName,
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
-  
+
   // Menyimpan dari objek TeamDetailResponse (jika Anda memiliki detail lengkapnya)
   Future<void> addFavoriteTeamFromDetail(TeamDetailResponse team) async {
     final db = await database;
@@ -233,6 +227,16 @@ class DatabaseHelper {
         'crest': team.crest,
         'areaName': team.area?.name,
       },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// Menyimpan tim favorit dari Map (untuk kebutuhan Provider)
+  Future<void> addFavoriteTeam(Map<String, dynamic> team) async {
+    final db = await database;
+    await db.insert(
+      'favorite_teams',
+      team,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
@@ -257,7 +261,6 @@ class DatabaseHelper {
     return maps.isNotEmpty;
   }
 
-  // Mengambil data tim favorit, bisa mengembalikan Map untuk fleksibilitas di UI
   Future<List<Map<String, dynamic>>> getAllFavoriteTeamsData() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query('favorite_teams');

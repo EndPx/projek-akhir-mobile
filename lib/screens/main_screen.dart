@@ -5,6 +5,8 @@ import '../screens/profile_screen.dart';
 import '../screens/feedback_screen.dart';
 import '../services/auth_service.dart';
 import '../screens/login_screen.dart';
+import 'package:provider/provider.dart';
+import '../provider/profile_provider.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -18,11 +20,14 @@ class _MainScreenState extends State<MainScreen> {
   final AuthService _authService = AuthService();
 
   static List<Widget> _widgetOptions(BuildContext context) => <Widget>[
-        const CompetitionsScreen(), // <--- INI DIGANTI
-        const FavoritesScreen(),    // Ini bisa jadi "Tim Favorit" nanti
-        const ProfileScreen(),
-        const FeedbackScreen(),
-      ];
+  const CompetitionsScreen(),
+  const FavoritesScreen(),
+    ChangeNotifierProvider(
+      create: (_) => ProfileProvider(),
+      child: const ProfileScreen(),
+    ),
+    const FeedbackScreen(),
+  ];
 
   void _onItemTapped(int index) {
     setState(() {

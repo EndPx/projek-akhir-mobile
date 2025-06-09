@@ -21,29 +21,6 @@ class Area {
   }
 }
 
-class CurrentSeason {
-  final int id;
-  final String startDate;
-  final String endDate;
-  final int? currentMatchday;
-
-  CurrentSeason({
-    required this.id,
-    required this.startDate,
-    required this.endDate,
-    this.currentMatchday,
-  });
-
-  factory CurrentSeason.fromJson(Map<String, dynamic> json) {
-    return CurrentSeason(
-      id: json['id'] as int,
-      startDate: json['startDate'] as String,
-      endDate: json['endDate'] as String,
-      currentMatchday: json['currentMatchday'] as int?,
-    );
-  }
-}
-
 class Competition {
   final int id;
   final Area area;
@@ -81,6 +58,23 @@ class Competition {
   }
 }
 
+class CurrentSeason {
+  final int id;
+  final String startDate;
+
+  CurrentSeason({
+    required this.id,
+    required this.startDate,
+  });
+
+  factory CurrentSeason.fromJson(Map<String, dynamic> json) {
+    return CurrentSeason(
+      id: json['id'] as int,
+      startDate: json['startDate'] as String,
+    );
+  }
+}
+
 class CompetitionListResponse {
   final int count;
   final List<Competition> competitions;
@@ -96,26 +90,6 @@ class CompetitionListResponse {
       competitions: (json['competitions'] as List<dynamic>? ?? [])
           .map((e) => Competition.fromJson(e as Map<String, dynamic>))
           .toList(),
-    );
-  }
-}
-
-class CompetitionInfo {
-  final int id;
-  final String name;
-  final String? code;
-  final String? type;
-  final String? emblem;
-
-  CompetitionInfo({required this.id, required this.name, this.code, this.type, this.emblem});
-
-  factory CompetitionInfo.fromJson(Map<String, dynamic> json) {
-    return CompetitionInfo(
-      id: json['id'],
-      name: json['name'],
-      code: json['code'],
-      type: json['type'],
-      emblem: json['emblem'],
     );
   }
 }
@@ -146,57 +120,24 @@ class TeamInfo {
   }
 }
 
-class SeasonInfo {
-  final int id;
-  final String startDate;
-  final String endDate;
-  final int? currentMatchday;
-  final TeamInfo? winner;
-
-  SeasonInfo({
-    required this.id, 
-    required this.startDate, 
-    required this.endDate, 
-    this.currentMatchday,
-    this.winner, 
-  });
-
-  factory SeasonInfo.fromJson(Map<String, dynamic> json) {
-    return SeasonInfo(
-      id: json['id'],
-      startDate: json['startDate'],
-      endDate: json['endDate'],
-      currentMatchday: json['currentMatchday'],
-      winner: json['winner'] != null ? TeamInfo.fromJson(json['winner']) : null,
-    );
-  }
-}
-
-
 class TableEntry {
   final int position;
   final TeamInfo team;
   final int playedGames;
-  final String? form;
   final int won;
   final int draw;
   final int lost;
   final int points;
-  final int goalsFor;
-  final int goalsAgainst;
   final int goalDifference;
 
   TableEntry({
     required this.position,
     required this.team,
     required this.playedGames,
-    this.form,
     required this.won,
     required this.draw,
     required this.lost,
     required this.points,
-    required this.goalsFor,
-    required this.goalsAgainst,
     required this.goalDifference,
   });
 
@@ -205,13 +146,10 @@ class TableEntry {
       position: json['position'] as int,
       team: TeamInfo.fromJson(json['team'] as Map<String, dynamic>),
       playedGames: json['playedGames'] as int,
-      form: json['form'] as String?,
       won: json['won'] as int,
       draw: json['draw'] as int,
       lost: json['lost'] as int,
       points: json['points'] as int,
-      goalsFor: json['goalsFor'] as int,
-      goalsAgainst: json['goalsAgainst'] as int,
       goalDifference: json['goalDifference'] as int,
     );
   }
@@ -242,40 +180,58 @@ class StandingGroup {
   }
 }
 
-class StandingsFilters {
-  final String? season;
-
-  StandingsFilters({this.season});
-
-  factory StandingsFilters.fromJson(Map<String, dynamic> json) {
-    return StandingsFilters(season: json['season']);
-  }
-}
-
 class StandingsResponse {
-  final StandingsFilters? filters;
-  final Area? area; 
-  final CompetitionInfo? competition;
-  final SeasonInfo? season;
   final List<StandingGroup> standings;
+  final SeasonInfo? season;
+  final CompetitionInfo? competition;
 
   StandingsResponse({
-    this.filters,
-    this.area,
-    this.competition,
-    this.season,
     required this.standings,
+    this.season,
+    this.competition,
   });
 
   factory StandingsResponse.fromJson(Map<String, dynamic> json) {
     return StandingsResponse(
-      filters: json['filters'] != null ? StandingsFilters.fromJson(json['filters']) : null,
-      area: json['area'] != null ? Area.fromJson(json['area']) : null,
-      competition: json['competition'] != null ? CompetitionInfo.fromJson(json['competition']) : null,
-      season: json['season'] != null ? SeasonInfo.fromJson(json['season']) : null,
       standings: (json['standings'] as List<dynamic>? ?? [])
           .map((e) => StandingGroup.fromJson(e as Map<String, dynamic>))
           .toList(),
+      season: json['season'] != null ? SeasonInfo.fromJson(json['season']) : null,
+      competition: json['competition'] != null ? CompetitionInfo.fromJson(json['competition']) : null,
+    );
+  }
+}
+
+class SeasonInfo {
+  final String startDate;
+
+  SeasonInfo({
+    required this.startDate,
+  });
+
+  factory SeasonInfo.fromJson(Map<String, dynamic> json) {
+    return SeasonInfo(
+      startDate: json['startDate'] as String,
+    );
+  }
+}
+
+class CompetitionInfo {
+  final int id;
+  final String name;
+  final String? emblem;
+
+  CompetitionInfo({
+    required this.id,
+    required this.name,
+    this.emblem,
+  });
+
+  factory CompetitionInfo.fromJson(Map<String, dynamic> json) {
+    return CompetitionInfo(
+      id: json['id'] as int,
+      name: json['name'] as String,
+      emblem: json['emblem'] as String?,
     );
   }
 }
@@ -321,18 +277,12 @@ class Contract {
 }
 
 class Coach {
-  final int? id;
-  final String? firstName;
-  final String? lastName;
   final String? name;
   final String? dateOfBirth;
   final String? nationality;
   final Contract? contract;
 
   Coach({
-    this.id,
-    this.firstName,
-    this.lastName,
     this.name,
     this.dateOfBirth,
     this.nationality,
@@ -341,9 +291,6 @@ class Coach {
 
   factory Coach.fromJson(Map<String, dynamic> json) {
     return Coach(
-      id: json['id'] as int?,
-      firstName: json['firstName'] as String?,
-      lastName: json['lastName'] as String?,
       name: json['name'] as String?,
       dateOfBirth: json['dateOfBirth'] as String?,
       nationality: json['nationality'] as String?,
@@ -354,41 +301,32 @@ class Coach {
 
 class Player {
   final int id;
-  final String? firstName;
-  final String? lastName;
   final String name;
   final String? position;
   final String? dateOfBirth;
   final String? nationality;
   final int? shirtNumber;
   final int? marketValue;
-  final Contract? contract;
 
   Player({
     required this.id,
-    this.firstName,
-    this.lastName,
     required this.name,
     this.position,
     this.dateOfBirth,
     this.nationality,
     this.shirtNumber,
     this.marketValue,
-    this.contract,
   });
 
   factory Player.fromJson(Map<String, dynamic> json) {
     return Player(
       id: json['id'] as int,
-      firstName: json['firstName'] as String?,
-      lastName: json['lastName'] as String?,
       name: json['name'] as String,
       position: json['position'] as String?,
       dateOfBirth: json['dateOfBirth'] as String?,
       nationality: json['nationality'] as String?,
       shirtNumber: json['shirtNumber'] as int?,
       marketValue: json['marketValue'] as int?,
-      contract: json['contract'] != null ? Contract.fromJson(json['contract']) : null,
     );
   }
 }
